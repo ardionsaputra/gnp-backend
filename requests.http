@@ -1,0 +1,267 @@
+### =========================================================================
+### Sistem Informasi Penyewaan Alat Berat GNP — REST API
+### Jalankan dengan ekstensi VS Code "REST Client" (humao.rest-client)
+### Pastikan server berjalan: php artisan serve
+### =========================================================================
+
+@baseUrl = http://127.0.0.1:8000/api
+@adminToken = GANTI_DENGAN_TOKEN_ADMIN_DARI_LOGIN
+@ownerToken = GANTI_DENGAN_TOKEN_OWNER_DARI_LOGIN
+
+### =========================================================================
+### 1. AUTENTIKASI
+### =========================================================================
+
+### Login Admin (akun seeder: admin@gnp.co.id / password123)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "admin@gnp.co.id",
+  "password": "password123"
+}
+
+### Login Owner (akun seeder: owner@gnp.co.id / password123)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "owner@gnp.co.id",
+  "password": "password123"
+}
+
+### Logout (Admin / Owner)
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{adminToken}}
+Accept: application/json
+
+### =========================================================================
+### 2. ENDPOINT PUBLIK (Pelanggan tanpa login)
+### =========================================================================
+
+### Katalog Unit (semua)
+GET {{baseUrl}}/units
+Accept: application/json
+
+### Katalog Unit (filter jenis_unit=forklift)
+GET {{baseUrl}}/units?jenis_unit=forklift&per_page=10
+Accept: application/json
+
+### Detail Unit
+GET {{baseUrl}}/units/1
+Accept: application/json
+
+### Simulasi Kebutuhan & Rekomendasi Unit
+POST {{baseUrl}}/simulasi
+Content-Type: application/json
+Accept: application/json
+
+{
+  "jenis_kebutuhan": "Pemindahan palet gudang",
+  "kapasitas_beban": 3,
+  "lokasi_proyek": "Kawasan Industri Candi, Semarang",
+  "periode_penggunaan": "5 hari",
+  "jenis_unit": "forklift"
+}
+
+### Kirim Pengajuan Penyewaan (tanpa login)
+POST {{baseUrl}}/pengajuan
+Content-Type: application/json
+Accept: application/json
+
+{
+  "id_unit": 1,
+  "nama": "Budi Santoso",
+  "nomor_telepon": "081234567890",
+  "email": "budi@contoh.co.id",
+  "alamat": "Jl. Pemuda No. 10, Semarang",
+  "tanggal_mulai": "2026-12-20",
+  "tanggal_selesai": "2026-12-22",
+  "lokasi_proyek": "Pelabuhan Tanjung Emas, Semarang",
+  "keterangan": "Butuh operator berpengalaman"
+}
+
+### Cek Status Pengajuan Publik (memakai kode_pengajuan dari seeder: DEMO01)
+GET {{baseUrl}}/pengajuan/status/DEMO01
+Accept: application/json
+
+### =========================================================================
+### 3. ENDPOINT TERAUTENTIKASI (Admin & Owner)
+### =========================================================================
+
+### Daftar Semua Pengajuan
+GET {{baseUrl}}/pengajuan
+Authorization: Bearer {{adminToken}}
+Accept: application/json
+
+### Detail Pengajuan
+GET {{baseUrl}}/pengajuan/1
+Authorization: Bearer {{adminToken}}
+Accept: application/json
+
+### =========================================================================
+### 4. KHUSUS ADMIN
+### =========================================================================
+
+### Tambah Unit Baru
+POST {{baseUrl}}/units
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "id_rekanan": null,
+  "nama_unit": "Forklift Mitsubishi 7T",
+  "jenis_unit": "forklift",
+  "kapasitas": 7,
+  "spesifikasi": "Diesel 7 Ton, Mast 4.5m",
+  "lokasi_unit": "Pool Semarang Barat",
+  "sumber_unit": "internal",
+  "harga_sewa": 1200000,
+  "status": "tersedia"
+}
+
+### Perbarui Unit
+PUT {{baseUrl}}/units/1
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "harga_sewa": 650000,
+  "status": "tersedia"
+}
+
+### Hapus Unit (409 jika masih punya pengajuan atau jadwal)
+DELETE {{baseUrl}}/units/1
+Authorization: Bearer {{adminToken}}
+Accept: application/json
+
+### CRUD Pelanggan — Daftar
+GET {{baseUrl}}/pelanggan
+Authorization: Bearer {{adminToken}}
+Accept: application/json
+
+### CRUD Pelanggan — Tambah
+POST {{baseUrl}}/pelanggan
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "nama": "CV Sinar Abadi",
+  "nomor_telepon": "081299988877",
+  "email": "sinar@contoh.co.id",
+  "alamat": "Jl. Kaligawe No. 5, Semarang"
+}
+
+### CRUD Pelanggan — Update
+PUT {{baseUrl}}/pelanggan/1
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "alamat": "Jl. Kaligawe KM 6, Semarang"
+}
+
+### CRUD Pelanggan — Hapus
+DELETE {{baseUrl}}/pelanggan/1
+Authorization: Bearer {{adminToken}}
+Accept: application/json
+
+### CRUD Rekanan — Daftar
+GET {{baseUrl}}/rekanan
+Authorization: Bearer {{adminToken}}
+Accept: application/json
+
+### CRUD Rekanan — Tambah
+POST {{baseUrl}}/rekanan
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "nama_rekanan": "PT Nusantara Heavy",
+  "kontak": "024-8889990"
+}
+
+### CRUD Rekanan — Update
+PUT {{baseUrl}}/rekanan/1
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "kontak": "024-8889991"
+}
+
+### CRUD Rekanan — Hapus (409 jika masih dirujuk unit)
+DELETE {{baseUrl}}/rekanan/1
+Authorization: Bearer {{adminToken}}
+Accept: application/json
+
+### CRUD Jadwal — Daftar
+GET {{baseUrl}}/jadwal
+Authorization: Bearer {{adminToken}}
+Accept: application/json
+
+### CRUD Jadwal — Tambah (422 jika bentrok)
+POST {{baseUrl}}/jadwal
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "id_unit": 1,
+  "tanggal_mulai": "2026-12-25",
+  "tanggal_selesai": "2026-12-27",
+  "status": "terjadwal"
+}
+
+### CRUD Jadwal — Update
+PUT {{baseUrl}}/jadwal/1
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "status": "berjalan"
+}
+
+### CRUD Jadwal — Hapus
+DELETE {{baseUrl}}/jadwal/1
+Authorization: Bearer {{adminToken}}
+Accept: application/json
+
+### Admin Perbarui Status Pengajuan (menunggu -> diproses, disetujui -> selesai/dibatalkan)
+PATCH {{baseUrl}}/pengajuan/1/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "status": "diproses"
+}
+
+### =========================================================================
+### 5. KHUSUS OWNER
+### =========================================================================
+
+### Halaman Pemeriksaan Pengajuan (kebutuhan, ketersediaan unit, estimasi harga)
+GET {{baseUrl}}/pengajuan/1/pemeriksaan
+Authorization: Bearer {{ownerToken}}
+Accept: application/json
+
+### Beri Keputusan Pengajuan (disetujui / ditolak)
+POST {{baseUrl}}/pengajuan/1/approval
+Authorization: Bearer {{ownerToken}}
+Content-Type: application/json
+Accept: application/json
+
+{
+  "keputusan": "disetujui",
+  "catatan": "Unit tersedia dan harga sesuai."
+}
