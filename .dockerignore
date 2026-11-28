@@ -1,0 +1,12 @@
+﻿node_modules
+vendor
+.git
+.gitignore
+.env
+.env.*
+.idea
+.vscode
+.DS_Store
+*.log
+*.sql
+*.sqlite
